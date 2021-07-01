@@ -33,7 +33,20 @@ class Dataloader:
         self.phase = phase
         self.len = len(self.flist_F)
 
-    def augment_data(self, inp, mask):
+    def shuffle(self, domain, seed=0):
+        """
+        Shuffle the list of data
+        :param domain: string, F (fully sampled) or D (downsampled)
+        :param seed: int, random seed
+        """
+        random.seed(seed)
+        if domain == 'F':
+            random.shuffle(self.flist_F)
+        else:
+            random.shuffle(self.flist_D)
+
+    @staticmethod
+    def augment_data(inp, mask):
         """
         Augment data
         :param inp: 3D (HWC) input numpy array
@@ -48,19 +61,7 @@ class Dataloader:
             inp = np.flip(inp, 0)
             mask = np.flip(mask, 0)
         return inp, mask
-
-    def shuffle(self, domain, seed=0):
-        """
-        Shuffle the list of data
-        :param domain: string, F (fully sampled) or D (downsampled)
-        :param seed: int, random seed
-        """
-        random.seed(seed)
-        if domain == 'F':
-            random.shuffle(self.flist_F)
-        else:
-            random.shuffle(self.flist_D)
-
+    
     @staticmethod
     def read_mat(filename):
         """
@@ -70,7 +71,7 @@ class Dataloader:
         """
         mat = sio.loadmat(filename, verify_compressed_data_integrity=False)
         return mat['data']
-
+    
     @staticmethod
     def make_mask(inp, R):
         """
@@ -134,7 +135,7 @@ class Dataloader:
             aScale_D = np.std(aInput_D)
             aInput_D = aInput_D / aScale_D
 
-            if self.phase == 'train' and self.augmentation:
+            if self.augmentation:
                 aInput_F, aMask_F = self.augment_data(aInput_F, aMask_F)
                 aInput_D, aMask_D = self.augment_data(aInput_D, aMask_D)
 
@@ -169,9 +170,6 @@ class Dataloader:
 
             aScale_D = np.std(aInput_D)
             aInput_D = aInput_D / aScale_D
-
-            if self.phase == 'train' and self.augmentation:
-                aInput_D, aMask_D = self.augment_data(aInput_D, aMask_D)
 
             Input_D[iB, :, :, 0] = aInput_D
             Scale_D[iB, :, :, 0] = np.tile(aScale_D, [self.nY, self.nX])
@@ -221,7 +219,7 @@ class Dataloader:
             aScale_D = np.std(ri2ssos(aInput_D))
             aInput_D = aInput_D / aScale_D
 
-            if self.phase == 'train' and self.augmentation:
+            if self.augmentation:
                 aInput_F, aMask_F = self.augment_data(aInput_F, aMask_F)
                 aInput_D, aMask_D = self.augment_data(aInput_D, aMask_D)
 
@@ -258,9 +256,6 @@ class Dataloader:
 
             aScale_D = np.std(ri2ssos(aInput_D))
             aInput_D = aInput_D / aScale_D
-
-            if self.phase == 'train' and self.augmentation:
-                aInput_D, aMask_D = self.augment_data(aInput_D, aMask_D)
 
             Input_D[iB, :, :, :] = aInput_D
             Scale_D[iB, :, :, :] = np.tile(aScale_D, [self.nY, self.nX, self.nC])
